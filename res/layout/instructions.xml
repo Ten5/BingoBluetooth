@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#CECECE" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="First you will have to select a number, then Andy will.\nOn completion of each line (horizontal or vertical or diagonal) you will score each letter of word...\nB I N G O\nOne who scores all 5 letters first, will win."
+        android:textColor="#4F0F65"
+        android:textSize="20sp" />
+
+</LinearLayout>
