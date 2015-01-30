@@ -9,17 +9,5 @@
     <item android:id="@+id/instruction" android:showAsAction="always" android:title="Instruction"></item>
     <item android:id="@+id/restart" android:title="New Game"></item>
     <item android:id="@+id/sound" android:title="Sound" ></item>
-    <item android:id="@+id/bluetooth" android:title="Bluetooth Mode"></item>
-    <item android:id="@+id/connect_scan"
-          android:icon="@android:drawable/ic_menu_search"
-          android:title="@string/connect"
-          android:showAsAction="ifRoom|withText"
-          android:enabled="true" />
-    
-    <item android:id="@+id/discoverable"
-          android:icon="@android:drawable/ic_menu_mylocation"
-          android:title="@string/discoverable"
-          android:showAsAction="ifRoom|withText"
-          android:enabled="false" />
 
 </menu>

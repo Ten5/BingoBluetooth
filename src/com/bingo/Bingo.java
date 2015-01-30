@@ -32,27 +32,10 @@ import android.widget.Toast;
 
 public class Bingo extends Activity {
 
-	// Key names received from the BluetoothChatService Handler
-	public static final String DEVICE_NAME = "device_name";
-	public static final String TOAST = "toast";
-
 	private static final boolean D = true;
-	private static final String TAG = "BluetoothChat";
-	private static final int REQUEST_ENABLE_BT = 3;
-	private static final int REQUEST_CONNECT_DEVICE = 2;
+	private static final String TAG = "BingoAI";
 
-	// Message types sent from the BluetoothChatService Handler
-	public static final int MESSAGE_STATE_CHANGE = 1;
-	public static final int MESSAGE_READ = 2;
-	public static final int MESSAGE_WRITE = 3;
-	public static final int MESSAGE_DEVICE_NAME = 4;
-	public static final int MESSAGE_TOAST = 5;
-
-	private BluetoothAdapter mBluetoothAdapter = null;
-	private BluetoothChatService mChatService = null;
-	private String mConnectedDeviceName = null;
-	private StringBuffer mOutStringBuffer;
-	private int game_over=0, num_to_send, mode=0, num_received;
+	private int game_over=0, num_to_send;
 
 	GridView grid;
 	AlertDialog.Builder builder1;
@@ -80,13 +63,10 @@ public class Bingo extends Activity {
 		andy=(TextView)findViewById(R.id.textView1);
 		you=(TextView)findViewById(R.id.textView2);		
 		grid=(GridView)findViewById(R.id.gridView1);
-		
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (mBluetoothAdapter == null) {
-			Toast.makeText(this, "Bluetooth is not available",Toast.LENGTH_LONG).show();
-			return;
-		}
-		
+		initialize();
+		adapter = new CustomGrid(Bingo.this, number);
+		grid.setAdapter(adapter);
+
 		//mp.start();
 
 		grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -111,7 +91,6 @@ public class Bingo extends Activity {
 				//Toast.makeText(Bingo.this, "Clicked at"+ number[arg2], Toast.LENGTH_LONG).show();
 				try {
 					num_to_send=Integer.parseInt(number[arg2]);
-					setupChat();
 				}
 				catch(Exception e) {
 					Toast.makeText(Bingo.this, "Null", Toast.LENGTH_LONG).show();
@@ -123,16 +102,14 @@ public class Bingo extends Activity {
 						arg1.setBackgroundColor(Color.parseColor("#ffffff"));
 						player_moves.add(Integer.parseInt(number[arg2]));
 						game_over=check();
-						if(mode==0) {
-							if(game_over!=1) {
-								int index=computerTurn();
-								if(index==-1)
-									Toast.makeText(Bingo.this, "Game Over!", Toast.LENGTH_LONG).show();
-								else {
-									computer_moves.add(index);
-									setTurn(index);
-									game_over=check();
-								}
+						if(game_over!=1) {
+							int index=computerTurn();
+							if(index==-1)
+								Toast.makeText(Bingo.this, "Game Over!", Toast.LENGTH_LONG).show();
+							else {
+								computer_moves.add(index);
+								setTurn(index);
+								game_over=check();
 							}
 						}
 					}
@@ -149,7 +126,7 @@ public class Bingo extends Activity {
 			if(computer[i][i]==0)
 				cflag++;
 		}
-		
+
 		if(pflag==5 && pscore[10]!=1) {
 			pscore[10]=1;
 			presult++;
@@ -168,7 +145,7 @@ public class Bingo extends Activity {
 		}
 		return 0;
 	}
-	
+
 	private int checkRightDiagonal() {
 		int i, cflag=0, pflag=0;
 		for(i=0;i<5;i++) {
@@ -196,7 +173,7 @@ public class Bingo extends Activity {
 		}
 		return 0;
 	}
-	
+
 	private int checkRows() {
 		int i,j,cflag=0,pflag=0;
 		for(i=0;i<5;i++) {
@@ -206,7 +183,7 @@ public class Bingo extends Activity {
 				if(computer[i][j]==0)
 					cflag++;
 			}
-			
+
 			if(pflag==5 && pscore[i]!=1) {
 				pscore[i]=1;
 				presult++;
@@ -263,7 +240,7 @@ public class Bingo extends Activity {
 		}
 		return 0;
 	}
-	
+
 	private int checkScore() {
 		Toast.makeText(Bingo.this, "Game Over!", Toast.LENGTH_LONG).show();
 		grid.setEnabled(false);
@@ -317,66 +294,41 @@ public class Bingo extends Activity {
 	}
 
 	public int computerTurn() {
-		/*
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}*/
 
 		int i,j=0,index=0;
-
-		if(mode == 1) {
-			j=0;index=0;
-			index=0;
-			comp_num=num_received;
-
-			showCustomAlert("Player gave " +comp_num, 1); 
-			for(i=0;i<25;i++) {
-				if(number[i].equals(Integer.toString(comp_num)))
-					index=i;
+		comp_numbers = new ArrayList<Integer>();
+		for(i=0;i<5;i++) {
+			for(j=0;j<5;j++) {
+				if(player[i][j]!=0)
+					comp_numbers.add(player[i][j]);
 			}
-			View item=grid.getChildAt(index);
-
-			TextView tv=(TextView)item.findViewById(R.id.grid_text);
-			tv.setTextColor(Color.WHITE);
-			item.setBackgroundColor(Color.parseColor("#4F0F65"));
 		}
-		else {
-			comp_numbers = new ArrayList<Integer>();
-			for(i=0;i<5;i++) {
-				for(j=0;j<5;j++) {
-					if(player[i][j]!=0)
-						comp_numbers.add(player[i][j]);
+
+		if(comp_numbers.isEmpty()==true)
+			return -1;
+		//Toast.makeText(Bingo.this, "Size " +numbers.size(), Toast.LENGTH_LONG).show();
+		Collections.shuffle(comp_numbers);
+
+		final Handler handler=new Handler();
+		handler.postDelayed(new Runnable() {
+			int i,index=0;
+			@Override
+			public void run() {
+				comp_num=comp_numbers.get(0);
+				showCustomAlert("Andy gave " +comp_num,1); 
+				for(i=0;i<25;i++) {
+					if(number[i].equals(Integer.toString(comp_num)))
+						index=i;
 				}
+				View item=grid.getChildAt(index);
+
+				TextView tv=(TextView)item.findViewById(R.id.grid_text);
+				tv.setTextColor(Color.WHITE);
+				item.setBackgroundColor(Color.parseColor("#4F0F65"));
 			}
-
-			if(comp_numbers.isEmpty()==true)
-				return -1;
-			//Toast.makeText(Bingo.this, "Size " +numbers.size(), Toast.LENGTH_LONG).show();
-			Collections.shuffle(comp_numbers);
-
-			final Handler handler=new Handler();
-			handler.postDelayed(new Runnable() {
-				int i,index=0;
-				@Override
-				public void run() {
-					comp_num=comp_numbers.get(0);
-					showCustomAlert("Andy gave " +comp_num,1); 
-					for(i=0;i<25;i++) {
-						if(number[i].equals(Integer.toString(comp_num)))
-							index=i;
-					}
-					View item=grid.getChildAt(index);
-
-					TextView tv=(TextView)item.findViewById(R.id.grid_text);
-					tv.setTextColor(Color.WHITE);
-					item.setBackgroundColor(Color.parseColor("#4F0F65"));
-				}
-			}, 3000);
-			//showCustomAlert("Andy gave " +num,1); 
-			//Toast.makeText(Bingo.this, "Computer gave " +num, Toast.LENGTH_SHORT).show();
-		}
+		}, 3000);
+		//showCustomAlert("Andy gave " + num, 1); 
+		//Toast.makeText(Bingo.this, "Computer gave " +num, Toast.LENGTH_SHORT).show();
 		return comp_num;
 	}
 
@@ -438,48 +390,8 @@ public class Bingo extends Activity {
 		return super.onKeyDown(keyCode, event);
 	}
 
-	private void ensureDiscoverable() {
-		if (D)
-			Log.d(TAG, "ensure discoverable");
-		if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-			Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-			discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-			startActivity(discoverableIntent);
-		}
-	}
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-
-		Intent serverIntent = null;
-		if(item.getItemId()==R.id.bluetooth) {
-			if (!mBluetoothAdapter.isEnabled()) {
-				Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-				startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-				// Otherwise, setup the chat session
-			} else {
-				if (mChatService == null)					
-					// Initialize the BluetoothChatService to perform bluetooth connections
-					mChatService = new BluetoothChatService(this, mHandler);
-				Toast.makeText(Bingo.this, "Setting up service!", Toast.LENGTH_SHORT).show();
-				// Initialize the buffer for outgoing messages
-				mOutStringBuffer = new StringBuffer("");
-			}
-			//Intent i=new Intent(Bingo.this,BluetoothBingo.class);
-			//startActivity(i);
-		}
-
-		if(item.getItemId() == R.id.connect_scan) {
-			// Launch the DeviceListActivity to see devices and do scan
-			serverIntent = new Intent(this, DeviceListActivity.class);
-			startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-			return true;
-		}
-		if(item.getItemId() == R.id.discoverable) {
-			// Ensure this device is discoverable by others
-			ensureDiscoverable();
-			return true;
-		}
 
 		if(item.getItemId()==R.id.item1)
 			Toast.makeText(Bingo.this,"Designed by Subhasree", Toast.LENGTH_LONG).show();
@@ -536,8 +448,6 @@ public class Bingo extends Activity {
 			builder1.setIcon(R.drawable.andy);
 			AlertDialog alert11 = builder1.create();
 			alert11.show();
-
-
 		}
 
 		if(item.getItemId()==R.id.sound) {
@@ -582,139 +492,6 @@ public class Bingo extends Activity {
 		return true;
 	}
 
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (D)
-			Log.d(TAG, "onActivityResult " + resultCode);
-		switch (requestCode) {
-		case REQUEST_CONNECT_DEVICE:
-			// When DeviceListActivity returns with a device to connect
-			if (resultCode == Activity.RESULT_OK) {
-				connectDevice(data);
-				mode = 1;
-				
-				//type here for sending list
-			}
-			break;
-		case REQUEST_ENABLE_BT:
-			// When the request to enable Bluetooth returns
-			if (resultCode == Activity.RESULT_OK) {
-				// Bluetooth is now enabled, so set up a chat session
-
-				Toast.makeText(Bingo.this, "Activity Result is OK", Toast.LENGTH_SHORT).show();
-			} else {
-				// User did not enable Bluetooth or an error occurred
-				Log.d(TAG, "BT not enabled");
-				Toast.makeText(this, R.string.bt_not_enabled_leaving,
-						Toast.LENGTH_SHORT).show();
-				finish();
-			}
-		}
-	}
-
-	private void setupChat() {
-		Log.d(TAG, "setupChat()");	
-		// Send a message using content of the edit text widget
-		String message = ""+num_to_send;
-		sendMessage(message);
-	}
-
-	private void sendMessage(String message) {
-		// Check that we're actually connected before trying anything
-		if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
-			Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
-			return;
-		}
-
-		// Check that there's actually something to send
-		if (message.length() > 0) {
-			// Get the message bytes and tell the BluetoothChatService to write
-			byte[] send = message.getBytes();
-			mChatService.write(send);
-
-			// Reset out string buffer to zero and clear the edit text field
-			mOutStringBuffer.setLength(0);
-		}
-	}
-
-	private final void setStatus(int resId) {
-		final ActionBar actionBar = getActionBar();
-		actionBar.setSubtitle(resId);
-	}
-
-	private final void setStatus(CharSequence subTitle) {
-		final ActionBar actionBar = getActionBar();
-		actionBar.setSubtitle(subTitle);
-	}
-
-	// The Handler that gets information back from the BluetoothChatService
-	@SuppressLint("HandlerLeak")
-	private final Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case MESSAGE_STATE_CHANGE:
-				if (D)
-					Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
-				switch (msg.arg1) {
-				case BluetoothChatService.STATE_CONNECTED:
-					setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-					//Toast.makeText(BluetoothBingo.this, R.string.title_connected_to+" "+mConnectedDeviceName, Toast.LENGTH_LONG).show();
-					break;
-				case BluetoothChatService.STATE_CONNECTING:
-					setStatus(R.string.title_connecting);
-					//Toast.makeText(BluetoothBingo.this, R.string.title_connecting, Toast.LENGTH_LONG).show();
-					break;
-				case BluetoothChatService.STATE_LISTEN:
-				case BluetoothChatService.STATE_NONE:
-					setStatus(R.string.title_not_connected);
-					//Toast.makeText(BluetoothBingo.this, R.string.title_not_connected, Toast.LENGTH_LONG).show();
-					break;
-				}
-				break;
-			case MESSAGE_WRITE:
-				byte[] writeBuf = (byte[]) msg.obj;
-				// construct a string from the buffer
-				String writeMessage = new String(writeBuf);
-				writeMessage.concat("");
-				break;
-			case MESSAGE_READ:
-				byte[] readBuf = (byte[]) msg.obj;
-				// construct a string from the valid bytes in the buffer
-				String readMessage = new String(readBuf, 0, msg.arg1);
-				if(!readMessage.contains("initial"))
-					num_received = Integer.parseInt(readMessage);
-				else {
-					String msgNum[] = new String[readMessage.length()-7];
-					for(int i=0; i<readMessage.length(); i++)
-						msgNum[i] = ""+readMessage.charAt(i);
-					number = msgNum;
-				}
-				//Toast.makeText(Bingo.this, readMessage, Toast.LENGTH_SHORT).show();
-				int check_repeat=setTurn(num_received);
-				if(check_repeat==1)
-					computerTurn();
-				break;
-			case MESSAGE_DEVICE_NAME:
-				// save the connected device's name
-				mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-				Toast.makeText(getApplicationContext(), "Connected to " + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
-				break;
-			case MESSAGE_TOAST:
-				Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST), Toast.LENGTH_SHORT).show();
-				break;
-			}
-		}
-	};
-
-	private void connectDevice(Intent data) {
-		// Get the device MAC address
-		String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-		// Get the BluetoothDevice object
-		BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-		// Attempt to connect to the device
-		mChatService.connect(device);
-	}
-
 	@SuppressLint("InflateParams")
 	public void showCustomAlert(String msg,int show_type) {
 		Context context = getApplicationContext();
@@ -740,17 +517,10 @@ public class Bingo extends Activity {
 		toast.setView(toastRoot);
 		toast.show();
 	}
-	
+
 	@Override
 	protected void onStart() {
 		super.onStart();
-		initialize();
-		adapter = new CustomGrid(Bingo.this, number);
-		grid.setAdapter(adapter);
-		/*String msg = "initial";
-		for(int i=0; i<number.length; i++)
-			msg += number[i];
-		sendMessage(msg);*/
 	}
 
 	@Override
@@ -760,18 +530,6 @@ public class Bingo extends Activity {
 			Log.e(TAG, "+ ON RESUME +");
 
 		mp = MediaPlayer.create(Bingo.this,R.raw.click);
-		// Performing this check in onResume() covers the case in which BT was
-		// not enabled during onStart(), so we were paused to enable it...
-		// onResume() will be called when ACTION_REQUEST_ENABLE activity
-		// returns.
-		if (mChatService != null) {
-			// Only if the state is STATE_NONE, do we know that we haven't
-			// started already
-			if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
-				// Start the Bluetooth chat services
-				mChatService.start();
-			}
-		}
 	}
 
 	@Override
@@ -785,9 +543,6 @@ public class Bingo extends Activity {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		// Stop the Bluetooth chat services
-		if (mChatService != null)
-			mChatService.stop();
 		if(mp != null)
 			mp.stop();
 		mp.release();

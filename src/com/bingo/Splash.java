@@ -9,7 +9,6 @@ public class Splash extends Activity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 				
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.spash);
@@ -20,10 +19,9 @@ public class Splash extends Activity {
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				Intent i=new Intent(Splash.this,Bingo.class);
-				finish();
+				Intent i=new Intent(Splash.this, SelectMenu.class);
 				startActivity(i);
-				
+				Splash.this.finish();							
 			}
 		}, 5000);
 		

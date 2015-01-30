@@ -176,10 +176,10 @@
             android:horizontalSpacing="10dp"
             android:numColumns="5"
             android:listSelector="#ffffff"
-             android:background="#A090A0"
-            android:verticalSpacing="10dp"
-            android:smoothScrollbar="true"
+            android:background="#A090A0"
+            android:verticalSpacing="10dp"            
             android:visibility="visible" />
+	      <!--android:smoothScrollbar="true" -->
 
 	      <TextView
 	          android:id="@+id/textView1"

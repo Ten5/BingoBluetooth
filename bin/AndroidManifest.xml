@@ -28,8 +28,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.bingo.SelectMenu" />
         <activity android:name="com.bingo.Computer" />
         <activity android:name="com.bingo.Bingo" />
+        <activity android:name="com.bingo.BingoPvP" />
         <activity android:name="com.bingo.Instruction" />
         <activity
             android:name="com.bingo.DeviceListActivity"
